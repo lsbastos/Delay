@@ -322,22 +322,23 @@ sari.state.pred
 # Time series
 p0 <- ggplot(sari.state, 
              #aes(x = EpiWeekStart, y = Y, colour = "Actual number of cases", linetype = "Actual number of cases")) + 
-             aes(x = EpiWeekStart, y = Y, colour = "The actual number of cases", linetype = "The actual number of cases")) + 
+             aes(x = EpiWeekStart, y = Y, colour = "Eventually reported cases", linetype = "Eventually reported cases")) + 
   geom_ribbon( data = sari.state.pred, aes( y = Median, ymin=LI, ymax=LS), fill = 'gray', color = 'gray', show.legend = F) +
   geom_line( size = 1)
 
 
 p1.s <- p0 + 
-  geom_line(data = sari.state.obs, aes(x = EpiWeekStart, y = Y, colour = "Reported cases with delay", linetype = "Reported cases with delay"), size = 1) +
-  geom_line(data = sari.state.pred, aes(x = EpiWeekStart, y = Median, colour = "Model predictions", linetype = "Model predictions"), size = 1) +   geom_hline(yintercept = 64.6, color = 'blue', linetype = 'dashed', size = 1) +
-  scale_colour_manual(name = "", values = c("black", "red", "black"), guide = guide_legend(reverse=TRUE)) + 
-  scale_linetype_manual(name = "", values = c("dotted", "dashed", "solid"), guide = guide_legend(reverse=TRUE)) +
+  geom_line(data = sari.state.obs, aes(x = EpiWeekStart, y = Y, colour = "Currently reported cases", linetype = "Currently reported cases"), size = 1) +
+  geom_line(data = sari.state.pred, aes(x = EpiWeekStart, y = Median, colour = "Model predictions", linetype = "Model predictions"), size = 1) +   
+  geom_hline(yintercept = 64.6, color = 'blue', linetype = 'dashed', size = 1) +
+  scale_colour_manual(name = "", values = c("red", "black", "black"), guide = guide_legend(reverse=F)) + 
+  scale_linetype_manual(name = "", values = c("dashed", "solid", "dotted"), guide = guide_legend(reverse=F)) +
   ylab("Number of SARI cases") + xlab("Time (Week/year)") 
 
 p1.sA <- p1.s +
   scale_x_date(date_breaks = "3 months", date_labels = "%W/%Y") +
   #scale_fill_manual(name = "", values = c("white","white","white")) + 
-  theme_bw(base_size = 14) + theme( legend.position=c(0.8,.85), legend.key.width = unit(2.5,"line") ) +
+  theme_bw(base_size = 14) + theme( legend.position=c(0.75,.85), legend.key.width = unit(2.5,"line") ) +
   annotate("text",x=as.Date("2016-05-15"), y=70, size=4, label='Epidemic threshold')
 p1.sA #+ guides(linetype = guide_legend(override.aes = list(fill = NA)))  
 
