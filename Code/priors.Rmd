@@ -1,0 +1,112 @@
+---
+title: "Priors used in Bastos et al. (To appear)"
+author: "Bastos, L., Economou, T., Gomes, M., Villela, D., Coelho, F., Cruz, O., Stoner, O., Bailey,T. and Codeço, C."
+date: "May 9, 2019"
+output: pdf_document
+header-includes:
+- \usepackage{caption}
+bibliography: ref.bib
+csl: aids.csl
+
+---
+
+
+## Introduction
+
+In this supplementary material we re write the models and add the priors described in the manuscript Bastos et al. (to appear).
+
+Two datasets were presented to perform the nowcasting  with different model approches. One for dengue fever in Rio de Janeiro, Brazil, and the other one to severe accute respiratory infection (SARI) in Paraná state, Brazil. An earlier version of the manuscript can be found in @Bastos2017.
+
+## Dengue fever in Rio de Janeiro, Brazil
+
+Let $n_{t,d}$ be the notified number of cases in week $t$ delayed in $d$ weeks, where $t=1,2,\ldots,T$ and $d=0,1,2\ldots,D$. Note that if $t + d > T$, then $n_{t,d}$ is occur-but-not-yet reported, hence unknown. More details in the manuscript.
+
+We assume a negative binomial likelihood, as the following
+$$n_{t,d} \sim NegBin(\lambda_{t,d}, \phi),$$
+for any $t=1,2,\ldots,T$, and $d=0,1,\ldots,D$. A gamma prior is set to $\phi$, and the rate $\lambda_{t,d}$ is given by
+$$\ln(\lambda_{t,d}) = \mu + \alpha_t + \beta_d + \gamma_{t,d} + \eta_{w[t]}.$$
+
+A fixed effect $\mu$ was set an improper prior proportinal to one. The random effects were then set with different random walk priors as implemented in the INLA package (@Rue2009,@Rue2017). And the hyperparameters, the random walk standard deviations were assumed to be half normal, or truncated normal at $(0,\infty)$, with a distintic standard deviation $\tau$ for each random effect, denoted as $HN(\tau)$. The table bellow summarizes all priors, and hyperpriors, already described in the manuscript.
+
+\begin{center}
+\captionof{table}{Prior distribution for all parameters in dengue nowcasting model.}
+\begin{tabular}{|c|c|l|}
+\hline
+Parameter & Distribution & In INLA \\ \hline
+$\phi$ & $\phi \sim Gamma(1,0.1)$ & $e^\phi \sim loggamma(1.0, 0.1)$ \\
+$\mu$ & $p(\mu) \propto 1$ & default \\
+$\alpha_t \mid \alpha_{t-1}, \sigma^2_\alpha$ & $\alpha_t - \alpha_{t-1} \mid \sigma^2_\alpha \sim N(0, \sigma^2_\alpha)$ & First order random walk (rw1) \\
+$\sigma^2_\alpha$ & $\sigma^2_\alpha \sim HN(\tau = 0.1)$ & half\_normal\_sd(0.1) \\ 
+$\beta_d \mid \beta_{d-1}, \sigma^2_\beta$ & $\beta_d - \beta_{d-1} \mid \sigma^2_\beta \sim N(0, \sigma^2_\beta)$ & First order random walk (rw1) \\
+$\sigma^2_\beta$ & $\sigma^2_\beta \sim HN(\tau = 1)$ & half\_normal\_sd(1) \\ 
+$\gamma_{d,t} \mid \gamma_{d,t-1}, \sigma^2_\gamma$ & $\gamma_{d,t} - \gamma_{d,t-1} \mid \sigma^2_\gamma \sim N(0, \sigma^2_\gamma)$ & First order random walk (rw1) replicate by $d$\\
+$\sigma^2_\gamma$ & $\sigma^2_\gamma \sim HN(\tau = 0.1)$ & half\_normal\_sd(0.1) \\ 
+$\eta_{w} \mid \eta_{w-1},\eta_{w-2}, \sigma^2_\eta$ & $(\eta_w - \eta_{w-1})-(\eta_{w-1} - \eta_{w-2}) \mid \sigma^2_\eta \sim N(0, \sigma^2_\eta)$ & Cyclic second order random walk (rw2) \\
+$\sigma^2_\eta$ & $\sigma^2_\eta \sim  HN(\tau = 1)$ & half\_normal\_sd(1) \\ 
+\hline
+\end{tabular}
+\end{center}
+
+The half normal distribution is not a defined prior in INLA, therefore it was implemented by one of the authors. Code is already available in the R script.
+
+### Simulating from the prior
+
+Based on the proposed priors we sampled 1000 matrices $n_{t,d}$ from the likelihood and derived a time series of notifications $N_t = \sum_d{n_{t,d}}$, for $t=1,2,\ldots,68$. The simulated data is plotted bellow, and the actual data is presented to show that the proposed priors are reasonable to our model and data.
+
+```{r, echo=FALSE}
+load("Dengue/sim.RData")
+
+plot(aaa$Y, type = "l", ylim = c(0,8000), 
+     ylab = "Notifications",
+     xlab = "Time")
+for(i in 1:500)
+  lines(aaa[,i+1], col="lightgray")
+lines(aaa$Y)
+
+
+```
+
+The code for simulation is available at https://github.com/lsbastos/Delay .
+
+
+## Severe acute respiratory infection (SARI) in Paraná Brazil
+
+Let $n_{t,d,s}$ be the notified number of cases in week $t$ delayed in $d$ weeks occur in health region $s$, where $t=1,2,\ldots,T$, $d=0,1,2\ldots,D$, and $s=1,2,\ldots,22$ health regions of Paraná state. Note that if $t + d > T$, then $n_{t,d,r}$ is unknown.
+
+We assume a negative binomial likelihood, as the following
+$$n_{t,d,s} \sim NegBin(\lambda_{t,d,s}, \phi),$$
+for any $t=1,2,\ldots,T$, $d=0,1,\ldots,D$, and $s=1,2,\ldots,22$. A gamma prior is set to $\phi$, and the rate $\lambda_{t,d,r}$ is given by
+$$\ln(\lambda_{t,d}) = \mu + \alpha_t + \beta_d + \gamma_{t,d} + \beta'_{d,s} + \Psi^{(IAR)}_{s} + \Psi^{(ind)}_{s}.$$
+
+A fixed effect $\mu$ was set an improper prior proportinal to one. The random effects, $\{\alpha_t\}$, $\{\beta_d\}$, $\{\gamma_{t,d}\}$ were set with different random walk priors, $\{\beta'_{d,s}\}$ is an independent Gaussian space-delay random effect, and the sum $\Psi^{(IAR)}_{s} + \Psi^{(ind)}_{s}$ is model as a bym (Besag, York, and Molied) random effect, all implemented in the INLA package. And the hyperparameters, the all random effects standard deviations were assumed to be half normal, or truncated normal at $(0,\infty)$, with a distintic standard deviation $\tau$ for each random effect, denoted as $HN(\tau)$. The table bellow summarizes all priors, and hyperpriors, for the SARI model. Description and motivation for priors, and hyperpriors, are already described in the manuscript.
+
+\begin{center}
+\captionof{table}{Prior distribution for all parameters in SARI model.}
+\begin{tabular}{|c|c|l|}
+\hline
+Parameter & Distribution & In INLA \\ \hline
+$\phi$ & $\phi \sim Gamma(1,0.1)$ & $e^\phi \sim loggamma(1.0, 0.1)$ \\
+$\mu$ & $p(\mu) \propto 1$ & default \\
+$\alpha_t \mid \alpha_{t-1}, \sigma^2_\alpha$ & $\alpha_t - \alpha_{t-1} \mid \sigma^2_\alpha \sim N(0, \sigma^2_\alpha)$ & First order random walk (rw1) \\
+$\sigma^2_\alpha$ & $\sigma^2_\alpha \sim HN(\tau = 0.1)$ & half\_normal\_sd(0.1) \\ 
+$\beta_d \mid \beta_{d-1}, \sigma^2_\beta$ & $\beta_d - \beta_{d-1} \mid \sigma^2_\beta \sim N(0, \sigma^2_\beta)$ & First order random walk (rw1) \\
+$\sigma^2_\beta$ & $\sigma^2_\beta \sim HN(\tau = 0.1)$ & half\_normal\_sd(0.1) \\ 
+$\gamma_{d,t} \mid \gamma_{d,t-1}, \sigma^2_\gamma$ & $\gamma_{d,t} - \gamma_{d,t-1} \mid \sigma^2_\gamma \sim N(0, \sigma^2_\gamma)$ & First order random walk (rw1) replicate by $d$\\
+$\sigma^2_\gamma$ & $\sigma^2_\gamma \sim HN(\tau = 0.1)$ & half\_normal\_sd(0.1) \\ 
+$\beta'_{d,s} \mid \sigma^2_{\beta'} $ & $\beta'_{d,s} \mid \sigma^2_{\beta'} \sim N(0, \sigma^2_{\beta'})$ & Independent gaussian (iid) \\
+$\sigma^2_{\beta'}$ & $\sigma^2_{\beta'} \sim HN(\tau = 0.1)$ & half\_normal\_sd(0.1) \\ 
+$\Psi_s \mid \sigma^2_{IAR}, \sigma^2_{ind}$ & $\Psi_s = (\Psi_s^{IAR} + \Psi_s^{ind}, \Psi_s^{ind})$ & Besag-York-Mollier model (bym) \\
+$\sigma^2_{IAR}$ & $\sigma^2_{IAR} \sim HN(\tau = 0.1)$ & half\_normal\_sd(0.1) \\ 
+ $\sigma^2_{ind}$ & $\sigma^2_{ind} \sim HN(\tau = 0.1)$ & half\_normal\_sd(0.1) \\ 
+\hline
+\end{tabular}
+\end{center}
+
+By construction in INLA, the Besag-York-Mollier model is a representation of a IAR model addded by a unstructured independent random effect. For more help on the bym model see the help function by typing in R:
+
+```{r, eval=FALSE}
+INLA::inla.doc("bym")
+```
+
+
+## References

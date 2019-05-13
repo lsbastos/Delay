@@ -77,33 +77,33 @@ model <- Y ~ 1 +
   f(t, model = "rw1", constr= T, hyper = list("prec" = list(prior = half_normal_sd(0.1)))) +
   f(tt, model = "rw1", constr= T, hyper = list("prec" = list(prior = half_normal_sd(0.1))),replicate=d) 
 
-  # Observed data
-  delay.data.obs <- delay.data[1:Tactual,(0:Dmax)+1]
-  
-  # Time index of the unknown counts (Dmax+1,...,Tactual) 
-  index.time <- (Tactual-Dmax+1):Tactual
+# Observed data
+delay.data.obs <- delay.data[1:Tactual,(0:Dmax)+1]
 
-  delay.data.obs.trian <- delay.data.obs
-  
-  # Creating the run-off triangle data frame
-  delay.data.obs.trian[outer(1:Tactual, 0:Dmax, FUN = "+") > Tactual] <- NA
+# Time index of the unknown counts (Dmax+1,...,Tactual) 
+index.time <- (Tactual-Dmax+1):Tactual
 
-  # Creating a data frame for INLA
-  delay.inla.trian <- make.df.trian(delay.data.obs.trian)
+delay.data.obs.trian <- delay.data.obs
 
-  # Find the missing values
-  index.missing <- which(is.na(delay.inla.trian$Y))
-    
-  inla.data <- list(Y=delay.inla.trian$Y,t=delay.inla.trian$Time,tt=delay.inla.trian$Time,
-                 d=delay.inla.trian$Delay+1)
-  inla.data$w <- inla.data$t%%52
+# Creating the run-off triangle data frame
+delay.data.obs.trian[outer(1:Tactual, 0:Dmax, FUN = "+") > Tactual] <- NA
+
+# Creating a data frame for INLA
+delay.inla.trian <- make.df.trian(delay.data.obs.trian)
+
+# Find the missing values
+index.missing <- which(is.na(delay.inla.trian$Y))
   
-  output <- inla(model, family = "nbinomial", data = inla.data,
-                 control.predictor = list(link = 1, compute = T),
-                 control.compute = list( config = T, waic=TRUE, dic=TRUE),
-                 control.family = list( 
-                   hyper = list("theta" = list(prior = "loggamma", param = c(1, 0.1)))),
-  )
+inla.data <- data.frame(Y=delay.inla.trian$Y,t=delay.inla.trian$Time,tt=delay.inla.trian$Time,
+               d=delay.inla.trian$Delay+1)
+inla.data$w <- inla.data$t%%52
+
+output <- inla(model, family = "nbinomial", data = inla.data,
+               control.predictor = list(link = 1, compute = T),
+               control.compute = list( config = T, waic=TRUE, dic=TRUE),
+               control.family = list( 
+                 hyper = list("theta" = list(prior = "loggamma", param = c(1, 0.1))))
+)
   
   n.sim <- 10000 # Number of posterior samples
   delay.samples.list <- inla.posterior.sample(n = n.sim, output) # Posterior samples list
